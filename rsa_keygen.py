@@ -5,14 +5,21 @@ Part A - RSA Encryption
 '''
 
 import random
+from Crypto.Util import number
 import argparse
+import math
+import message as message_lib
+import calculate_power
 
+def generate_big_prime():
+    return number.getPrime(16)
 
 def gcd(a, b):
     '''
     Euclid's algorithm for determining the greatest common divisor
     Use iteration to make it faster for larger integers
     '''
+    print('Processing Euclid\'algorithm...')
     while b != 0:
         a, b = b, a % b
         # print for debug
@@ -29,7 +36,7 @@ def multiplicative_inverse(e, phi):
     x2 = 1
     y1 = 1
     temp_phi = phi
-
+    print('Processing Euclid\' extended algorithm...')
     while e > 0:
         temp1 = int(temp_phi/e)
         temp2 = temp_phi - temp1 * e
@@ -50,29 +57,10 @@ def multiplicative_inverse(e, phi):
     if temp_phi == 1:
         return d + phi
 
-
-def is_prime(num):
-    '''
-    Tests to see if a number is prime.
-    '''
-    if num == 2:
-        return True
-    if num < 2 or num % 2 == 0:
-        return False
-    for n in range(3, int(num**0.5)+2, 2):
-        if num % n == 0:
-            return False
-    return True
-
-
 def generate_keypair(p, q):
     '''
         Gen keypair with p, q
     '''
-    if not (is_prime(p) and is_prime(q)):
-        raise ValueError('Both numbers must be prime.')
-    elif p == q:
-        raise ValueError('p and q cannot be equal')
     #n = pq
     n = p * q
 
@@ -94,43 +82,33 @@ def generate_keypair(p, q):
     # Public key is (e, n) and private key is (d, n)
     return ((e, n), (d, n))
 
-
-def encrypt(pk, plaintext):
-    # Unpack the key into it's components
-    key, n = pk
-    # Convert each letter in the plaintext to numbers based on the character using a^b mod m
-    cipher = [(ord(char) ** key) % n for char in plaintext]
-    # Return the array of bytes
-    return cipher
+def encrypt(transformed, e, n):
+    return calculate_power.mod_pow(transformed, e, n)
 
 
-def decrypt(pk, ciphertext):
-    # Unpack the key into its components
-    key, n = pk
-    # Generate the plaintext based on the ciphertext and key using a^b mod m
-    plain = [chr((char ** key) % n) for char in ciphertext]
-    # Return the array of bytes as a string
-    return ''.join(plain)
-
+def decrypt(encrypted, d, n):
+    return calculate_power.mod_pow(encrypted, d, n)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-msg', type=str, required=True,
                         help='Input string to crypt')
-    parser.add_argument('-p', type=int, required=True,
-                        help='Prime number p')
-    parser.add_argument('-q', type=int, required=True,
-                        help='Prime number q')
     args = parser.parse_args()
     print("RSA Encrypter/ Decrypter")
-    p = args.p
-    q = args.q
     message = args.msg
     print("Generating your public/private keypairs now . . .")
-    public, private = generate_keypair(p, q)
+    print("Generating p and q")
+    p = generate_big_prime()
+    q = generate_big_prime()
+    print('Generated p, q: [', p, ',', q, ']')
+    print('Calculating key pair...')
+    public, private = generate_keypair(62483, 49261)
     print("Your public key is ", public, " and your private key is ", private)
-    encrypted_msg = encrypt(private, message)
-    print("Your encrypted message is: ")
-    print(''.join(map(lambda x: str(x), encrypted_msg)))
-    print("Decrypting message with public key ", public, " . . .")
-    print("Your message is:", decrypt(public, encrypted_msg))
+    print("Transforming plaintext...")
+    transformed = message_lib.transform(message)
+    print("Transformed plaintext: ", transformed)
+    encrypted = encrypt(transformed, public[0], public[1])
+    print("Encrypted message: ", encrypted)
+    decrypted = decrypt(encrypted, private[0], private[1])
+    print("Decrypted transformed message: ", decrypted)
+    print("Plaintext: ", message_lib.detransform(decrypted))
