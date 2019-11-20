@@ -46,23 +46,31 @@ def generate_private_key(n, e):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-msg', type=int, required=True,
-                        help='Input encrypted message to decrypt')
-    parser.add_argument('-n', type=int, required=True,
-                        help='Modulus n')
-    parser.add_argument('-e', type=int, required=True,
-                        help='public key exponent')
+    # parser.add_argument('-msg', type=int, required=True,
+    #                     help='Input encrypted message to decrypt')
+    # parser.add_argument('-n', type=int, required=True,
+    #                     help='Modulus n')
+    # parser.add_argument('-e', type=int, required=True,
+    #                     help='public key exponent')
+    parser.add_argument('-f', type=str, required=True, help='file name contain key and encrypted message')
     args = parser.parse_args()
     print("RSA Cracker")
-    msg = args.msg
-    n = args.n
-    e = args.e
-    print('Message:', msg, 'encrypted with key: (', n, ',', e, ')')
-    print('Calculating private key....')
-    (d, n) = generate_private_key(n, e)
-    print('Calculated private key: (', d, ',', n, ')')
-    decrypted = my_crypto.decrypt_num_message(msg, d, n)
-    print("Plaintext: ", message_lib.detransform(decrypted))
+    file = args.f
+    with open(file, "r") as encrypted_data:
+        lines = encrypted_data.readlines()
+        for line in lines:
+            if(' ' in line):
+                e, n = line.split(' ')
+                e = int(e)
+                n = int(n)
+            else:
+                encrypted = int(line)
+                print('Message:', line, 'encrypted with key: (', n, ',', e, ')')
+                print('Calculating private key....')
+                (d, n) = generate_private_key(n, e)
+                print('Calculated private key: (', d, ',', n, ')')
+                decrypted = my_crypto.decrypt_num_message(line, d, n)
+                print("Plaintext: ", message_lib.detransform(decrypted))
     
     
     

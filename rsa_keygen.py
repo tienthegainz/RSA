@@ -95,20 +95,48 @@ if __name__ == '__main__':
                         help='Input string to crypt')
     args = parser.parse_args()
     print("RSA Encrypter/ Decrypter")
-    message = args.msg
+    msg = args.msg
+
+    # chunk message
+    messages = []
+    chunks = len(msg)
+    base = 0
+    while chunks > 1:
+        messages.append(msg[base:base+6])
+        base += 6
+        chunks -= 6
+
+    print("Chunked message: ", messages)
+
     print("Generating your public/private keypairs now . . .")
+
+    # gen private value p q
     print("Generating p and q")
     p = generate_big_prime()
     q = generate_big_prime()
     print('Generated p, q: [', p, ',', q, ']')
     print('Calculating key pair...')
+
+    # gen keys
     public, private = generate_keypair(62483, 49261)
     print("Your public key is ", public, " and your private key is ", private)
-    print("Transforming plaintext...")
-    transformed = message_lib.transform(message)
-    print("Transformed plaintext: ", transformed)
-    encrypted = encrypt(transformed, public[0], public[1])
-    print("Encrypted message: ", encrypted)
-    decrypted = decrypt(encrypted, private[0], private[1])
-    print("Decrypted transformed message: ", decrypted)
-    print("Plaintext: ", message_lib.detransform(decrypted))
+
+    # encrpypt and decrypt message
+    with open("encrypted.txt", "w") as encrypt_file, open("decrypted.txt", "w") as decrypt_file:
+        encrypt_file.write(str(public[0]) + ' ' + str(public[1]) + '\n')
+        decrypt_file.write(str(private[0]) + ' ' + str(private[1]) + '\n')
+        for message in messages:
+            print("Encrypting: ", message)
+            print("Transforming plaintext...")
+            transformed = message_lib.transform(message)
+            print("Transformed plaintext: ", transformed)
+            encrypted = encrypt(transformed, public[0], public[1])
+            print("Encrypted message: ", encrypted)
+            decrypted = decrypt(encrypted, private[0], private[1])
+            print("Decrypted transformed message: ", decrypted)
+            print("Plaintext: ", message_lib.detransform(decrypted))
+            encrypt_file.write(str(encrypted) + '\n')
+            decrypt_file.write(str(message) + '\n')
+        encrypt_file.close()
+        decrypt_file.close()
+    

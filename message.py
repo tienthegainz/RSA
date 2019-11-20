@@ -45,10 +45,11 @@ def transform(plaintext):
     '''
     transform plaintext into number
     '''
+    plaintext = plaintext.upper()
     result = 0
     place = len(plaintext) - 1
     for i in range(len(plaintext)):
-        result += map_character(plaintext[i]) * (26 ** place)
+        result += map_character(plaintext[i], True) * (28 ** place)
         place -= 1
     return result
 
@@ -57,9 +58,9 @@ def calculate_length(transformed):
     get plaintext original length from transformed plaintext 
     '''
     len = 0
-    while transformed > 26:
+    while transformed > 28:
         len += 1
-        transformed /= 26
+        transformed /= 28
     return len
 
 def detransform(transformed):
@@ -69,7 +70,7 @@ def detransform(transformed):
     len = calculate_length(transformed)
     message = []
     while len >= 0:
-        base = 26 ** len
+        base = 28 ** len
         char = int(transformed / base)
         message.append(map_character(char, False))
         transformed -= base * char
