@@ -5,9 +5,17 @@ Part A - RSA Encryption
 '''
 
 import random
+from Crypto.Util import number
 import argparse
-
+import math
+import message as message_lib
+import calculate_power
+import pickle
 random.seed(3)
+
+
+def generate_big_prime():
+    return number.getPrime(16)
 
 
 def gcd(a, b):
@@ -15,10 +23,9 @@ def gcd(a, b):
     Euclid's algorithm for determining the greatest common divisor
     Use iteration to make it faster for larger integers
     '''
+    print('Processing Euclid\'algorithm...')
     while b != 0:
         a, b = b, a % b
-        # print for debug
-        # print("a, b = {}, {}".format(a, b))
     return a
 
 
@@ -31,7 +38,7 @@ def multiplicative_inverse(e, phi):
     x2 = 1
     y1 = 1
     temp_phi = phi
-
+    print('Processing Euclid\' extended algorithm...')
     while e > 0:
         temp1 = int(temp_phi/e)
         temp2 = temp_phi - temp1 * e
@@ -52,29 +59,10 @@ def multiplicative_inverse(e, phi):
     if temp_phi == 1:
         return d + phi
 
-
-def is_prime(num):
-    '''
-    Tests to see if a number is prime.
-    '''
-    if num == 2:
-        return True
-    if num < 2 or num % 2 == 0:
-        return False
-    for n in range(3, int(num**0.5)+2, 2):
-        if num % n == 0:
-            return False
-    return True
-
-
 def generate_keypair(p, q):
     '''
         Gen keypair with p, q
     '''
-    if not (is_prime(p) and is_prime(q)):
-        raise ValueError('Both numbers must be prime.')
-    elif p == q:
-        raise ValueError('p and q cannot be equal')
     #n = pq
     n = p * q
 
@@ -96,24 +84,24 @@ def generate_keypair(p, q):
     # Public key is (e, n) and private key is (d, n)
     return ((e, n), (d, n))
 
-
-def encrypt(pk, plaintext):
-    # Unpack the key into it's components
-    key, n = pk
-    # Convert each letter in the plaintext to numbers based on the character using a^b mod m
-    cipher = [(ord(char) ** key) % n for char in plaintext]
-    # Return the array of bytes
-    return cipher
+def encrypt(transformed, e, n):
+    return calculate_power.mod_pow(transformed, e, n)
 
 
-def decrypt(pk, ciphertext):
-    # Unpack the key into its components
-    key, n = pk
-    # Generate the plaintext based on the ciphertext and key using a^b mod m
-    plain = [chr((char ** key) % n) for char in ciphertext]
-    # Return the array of bytes as a string
-    return ''.join(plain)
+def decrypt(encrypted, d, n):
+    return calculate_power.mod_pow(encrypted, d, n)
 
+def chunk_message(msg):
+    msg = msg.strip(" \n\t\r")
+    print(msg)
+    messages = []
+    chunks = len(msg)
+    base = 0
+    while chunks > 1:
+        messages.append(msg[base:base+6])
+        base += 6
+        chunks -= 6
+    return messages
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -124,48 +112,63 @@ if __name__ == '__main__':
                         help='File path to crypt')
     parser.add_argument('-output', type=str, default=None,
                         help='Encrypted file path')
-    parser.add_argument('-p', type=int, required=True,
-                        help='Prime number p')
-    parser.add_argument('-q', type=int, required=True,
-                        help='Prime number q')
     args = parser.parse_args()
     print("RSA Encrypter/ Decrypter")
-    p = args.p
-    q = args.q
-    message = args.msg
+    msg = args.msg
     input_file = args.raw
     output_file = args.output
-    print("Generating your public/private keypairs now . . .")
-    public, private = generate_keypair(p, q)
-    print("Your public key is ", public,
-          " and your private key is ", private)
-
-    with open('key.txt', 'w') as fp:
-        fp.write('Public: {}\n'.format(public))
-        fp.write('Private: {}\n'.format(private))
-        fp.close()
-
-    if message != None:
-        encrypted_msg = encrypt(private, message)
-        print("Your encrypted message is: ")
-        print(''.join(map(lambda x: str(x), encrypted_msg)))
-        print("Decrypting message with public key ", public, " . . .")
-        print("Your message is:", decrypt(public, encrypted_msg))
-    elif input_file != None and output_file != None:
+    if input_file != None and output_file != None:
         try:
-            ifp = open(input_file, 'r')
-            ofp = open(output_file, 'a')
+            decrypt_file = open(input_file, 'r')
+            encrypt_file = open(output_file, 'wb')
             # read an write
-            content = ifp.read()
-            print('Content: {}'.format(content))
-            # encrypt
-            encrypted_msg = encrypt(private, content)
-            # print('Encrypted: {}'.format(encrypted_msg))
-            ofp.write('{}'.format(
-                ''.join(map(lambda x: str(x), encrypted_msg))))
-            ifp.close()
-            ofp.close()
+            content = decrypt_file.read()
         except Exception as err:
             print(err)
-    else:
-        print("Missing argurments")
+            exit()
+    
+    # chunk message
+    messages = chunk_message(content)
+    print("Chunked message: ", messages)
+
+    print("Generating your public/private keypairs now . . .")
+
+    # gen private value p q
+    print("Generating p and q")
+    p = generate_big_prime()
+    q = generate_big_prime()
+    print('Generated p, q: [', p, ',', q, ']')
+    print('Calculating key pair...')
+
+    # gen keys
+    public, private = generate_keypair(62483, 49261)
+    print("Your public key is ", public, " and your private key is ", private)
+
+
+    key = {'public': public, 'private': private}
+    with open('key.txt', 'wb') as fp:
+        pickle.dump(key, fp)
+        fp.close()
+
+    # encrpypt and decrypt message
+    # encrypt_file.write(str(public[0]) + ' ' + str(public[1]) + '\n')
+    # decrypt_file.write(str(private[0]) + ' ' + str(private[1]) + '\n')
+    encrypt_msg = list()
+    for message in messages:
+        print("Encrypting: ", message)
+        print("Transforming plaintext...")
+        transformed = message_lib.transform(message)
+        print("Transformed plaintext: ", transformed)
+        encrypted = encrypt(transformed, public[0], public[1])
+        print("Encrypted message: ", encrypted)
+        encrypt_msg.append(encrypted)
+
+        decrypted = decrypt(encrypted, private[0], private[1])
+        print("Decrypted transformed message: ", decrypted)
+        print("Plaintext: ", message_lib.detransform(decrypted))
+    
+    pickle.dump(encrypt_msg, encrypt_file)
+
+    encrypt_file.close()
+    decrypt_file.close()
+    
