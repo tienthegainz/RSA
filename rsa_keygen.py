@@ -7,6 +7,8 @@ Part A - RSA Encryption
 import random
 import argparse
 
+random.seed(3)
+
 
 def gcd(a, b):
     '''
@@ -16,7 +18,7 @@ def gcd(a, b):
     while b != 0:
         a, b = b, a % b
         # print for debug
-        print("a, b = {}, {}".format(a, b))
+        # print("a, b = {}, {}".format(a, b))
     return a
 
 
@@ -115,8 +117,13 @@ def decrypt(pk, ciphertext):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-msg', type=str, required=True,
+
+    parser.add_argument('-msg', type=str, default=None,
                         help='Input string to crypt')
+    parser.add_argument('-raw', type=str, default=None,
+                        help='File path to crypt')
+    parser.add_argument('-output', type=str, default=None,
+                        help='Encrypted file path')
     parser.add_argument('-p', type=int, required=True,
                         help='Prime number p')
     parser.add_argument('-q', type=int, required=True,
@@ -126,11 +133,39 @@ if __name__ == '__main__':
     p = args.p
     q = args.q
     message = args.msg
+    input_file = args.raw
+    output_file = args.output
     print("Generating your public/private keypairs now . . .")
     public, private = generate_keypair(p, q)
-    print("Your public key is ", public, " and your private key is ", private)
-    encrypted_msg = encrypt(private, message)
-    print("Your encrypted message is: ")
-    print(''.join(map(lambda x: str(x), encrypted_msg)))
-    print("Decrypting message with public key ", public, " . . .")
-    print("Your message is:", decrypt(public, encrypted_msg))
+    print("Your public key is ", public,
+          " and your private key is ", private)
+
+    with open('key.txt', 'w') as fp:
+        fp.write('Public: {}\n'.format(public))
+        fp.write('Private: {}\n'.format(private))
+        fp.close()
+
+    if message != None:
+        encrypted_msg = encrypt(private, message)
+        print("Your encrypted message is: ")
+        print(''.join(map(lambda x: str(x), encrypted_msg)))
+        print("Decrypting message with public key ", public, " . . .")
+        print("Your message is:", decrypt(public, encrypted_msg))
+    elif input_file != None and output_file != None:
+        try:
+            ifp = open(input_file, 'r')
+            ofp = open(output_file, 'a')
+            # read an write
+            content = ifp.read()
+            print('Content: {}'.format(content))
+            # encrypt
+            encrypted_msg = encrypt(private, content)
+            # print('Encrypted: {}'.format(encrypted_msg))
+            ofp.write('{}'.format(
+                ''.join(map(lambda x: str(x), encrypted_msg))))
+            ifp.close()
+            ofp.close()
+        except Exception as err:
+            print(err)
+    else:
+        print("Missing argurments")
