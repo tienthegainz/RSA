@@ -10,9 +10,13 @@ import argparse
 import math
 import message as message_lib
 import calculate_power
+import pickle
+random.seed(3)
+
 
 def generate_big_prime():
     return number.getPrime(16)
+
 
 def gcd(a, b):
     '''
@@ -22,8 +26,6 @@ def gcd(a, b):
     print('Processing Euclid\'algorithm...')
     while b != 0:
         a, b = b, a % b
-        # print for debug
-        print("a, b = {}, {}".format(a, b))
     return a
 
 
@@ -89,15 +91,9 @@ def encrypt(transformed, e, n):
 def decrypt(encrypted, d, n):
     return calculate_power.mod_pow(encrypted, d, n)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-msg', type=str, required=True,
-                        help='Input string to crypt')
-    args = parser.parse_args()
-    print("RSA Encrypter/ Decrypter")
-    msg = args.msg
-
-    # chunk message
+def chunk_message(msg):
+    msg = msg.strip(" \n\t\r")
+    print(msg)
     messages = []
     chunks = len(msg)
     base = 0
@@ -105,7 +101,34 @@ if __name__ == '__main__':
         messages.append(msg[base:base+6])
         base += 6
         chunks -= 6
+    return messages
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-msg', type=str, default=None,
+                        help='Input string to crypt')
+    parser.add_argument('-raw', type=str, default=None,
+                        help='File path to crypt')
+    parser.add_argument('-output', type=str, default=None,
+                        help='Encrypted file path')
+    args = parser.parse_args()
+    print("RSA Encrypter/ Decrypter")
+    msg = args.msg
+    input_file = args.raw
+    output_file = args.output
+    if input_file != None and output_file != None:
+        try:
+            decrypt_file = open(input_file, 'r')
+            encrypt_file = open(output_file, 'wb')
+            # read an write
+            content = decrypt_file.read()
+        except Exception as err:
+            print(err)
+            exit()
+    
+    # chunk message
+    messages = chunk_message(content)
     print("Chunked message: ", messages)
 
     print("Generating your public/private keypairs now . . .")
@@ -121,22 +144,31 @@ if __name__ == '__main__':
     public, private = generate_keypair(62483, 49261)
     print("Your public key is ", public, " and your private key is ", private)
 
+
+    key = {'public': public, 'private': private}
+    with open('key.txt', 'wb') as fp:
+        pickle.dump(key, fp)
+        fp.close()
+
     # encrpypt and decrypt message
-    with open("encrypted.txt", "w") as encrypt_file, open("decrypted.txt", "w") as decrypt_file:
-        encrypt_file.write(str(public[0]) + ' ' + str(public[1]) + '\n')
-        decrypt_file.write(str(private[0]) + ' ' + str(private[1]) + '\n')
-        for message in messages:
-            print("Encrypting: ", message)
-            print("Transforming plaintext...")
-            transformed = message_lib.transform(message)
-            print("Transformed plaintext: ", transformed)
-            encrypted = encrypt(transformed, public[0], public[1])
-            print("Encrypted message: ", encrypted)
-            decrypted = decrypt(encrypted, private[0], private[1])
-            print("Decrypted transformed message: ", decrypted)
-            print("Plaintext: ", message_lib.detransform(decrypted))
-            encrypt_file.write(str(encrypted) + '\n')
-            decrypt_file.write(str(message) + '\n')
-        encrypt_file.close()
-        decrypt_file.close()
+    # encrypt_file.write(str(public[0]) + ' ' + str(public[1]) + '\n')
+    # decrypt_file.write(str(private[0]) + ' ' + str(private[1]) + '\n')
+    encrypt_msg = list()
+    for message in messages:
+        print("Encrypting: ", message)
+        print("Transforming plaintext...")
+        transformed = message_lib.transform(message)
+        print("Transformed plaintext: ", transformed)
+        encrypted = encrypt(transformed, public[0], public[1])
+        print("Encrypted message: ", encrypted)
+        encrypt_msg.append(encrypted)
+
+        decrypted = decrypt(encrypted, private[0], private[1])
+        print("Decrypted transformed message: ", decrypted)
+        print("Plaintext: ", message_lib.detransform(decrypted))
+    
+    pickle.dump(encrypt_msg, encrypt_file)
+
+    encrypt_file.close()
+    decrypt_file.close()
     

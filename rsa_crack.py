@@ -7,6 +7,7 @@ import argparse
 import math
 import my_crypto
 import message as message_lib
+import pickle
 
 def factor(n):
     '''
@@ -52,25 +53,33 @@ if __name__ == '__main__':
     #                     help='Modulus n')
     # parser.add_argument('-e', type=int, required=True,
     #                     help='public key exponent')
-    parser.add_argument('-f', type=str, required=True, help='file name contain key and encrypted message')
+    parser.add_argument('-fm', type=str, required=True, help='file data')
+    parser.add_argument('-fk', type=str, required=True, help='file name contain key')
     args = parser.parse_args()
     print("RSA Cracker")
-    file = args.f
-    with open(file, "r") as encrypted_data:
-        lines = encrypted_data.readlines()
-        for line in lines:
-            if(' ' in line):
-                e, n = line.split(' ')
-                e = int(e)
-                n = int(n)
-            else:
-                encrypted = int(line)
-                print('Message:', line, 'encrypted with key: (', n, ',', e, ')')
-                print('Calculating private key....')
-                (d, n) = generate_private_key(n, e)
-                print('Calculated private key: (', d, ',', n, ')')
-                decrypted = my_crypto.decrypt_num_message(line, d, n)
-                print("Plaintext: ", message_lib.detransform(decrypted))
+    data_file = args.fm
+    key_file = args.fk
+    try:
+        data = open(data_file, "rb")
+        key = open(key_file, 'rb')
+        data = pickle.load(data)
+        key = pickle.load(key)
+    except Exception as err:
+        print(err)
+
+    print('encrypted with key: e,n ({}, {})'.format(key['public'][0], key['public'][1]))
+    e = key['public'][0]
+    n = key['public'][1]
+    #exit()
+    print('Calculating private key....')
+    (d, n) = generate_private_key(n, e)
+    print('Calculated private key: (', d, ',', n, ')')
+    base = []
+    for line in data:
+        decrypted = my_crypto.decrypt_num_message(line, d, n)
+        base.append(message_lib.detransform(decrypted))
+        # print("Plaintext: ", message_lib.detransform(decrypted))
+    print(''.join(base))
     
     
     
