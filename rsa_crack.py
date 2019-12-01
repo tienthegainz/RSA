@@ -59,10 +59,12 @@ def generate_private_key(n, e):
 def rsa_decrypt(public, data):
     e = public[0]
     n = public[1]
+    print('n = {} -- e = {}'.format(n, e))
     (d, n) = generate_private_key(n, e)
     base = []
     for line in data:
         decrypted = decrypt_num_message(line, d, n)
+        print("Decrypted: {}\n".format(detransform(decrypted)))
         base.append(detransform(decrypted))
 
     return (''.join(base), (d, n))

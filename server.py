@@ -4,6 +4,8 @@ from rsa_keygen import rsa_encrypt
 from flask import Flask, request, jsonify
 from json import dumps
 
+from utils import gcd
+
 app = Flask(__name__)
 
 
@@ -13,16 +15,21 @@ def encrypt():
         try:
             req = request.form
             data = req['data']
-            p = None
-            q = None
-            if 'q' in req and 'p' in req:
-                q = req['q']
-                p = req['p']
-            key, code = rsa_encrypt(data, p, q)
-            return jsonify({'success': True, 'public': (key), 'encrypted': (code)})
+            if 'e' in req and 'n' in req:
+                e = int(req['e'])
+                n = int(req['n'])
+
+                key, code = rsa_encrypt(data, e=e, n=n)
+            elif 'q' in req and 'p' in req:
+                q = int(req['q'])
+                p = int(req['p'])
+                key, code = rsa_encrypt(data, p=p, q=q)
+            else:
+                key, code = rsa_encrypt(data)
+            return jsonify({'success': True, 'public': key, 'encrypted': code})
         except Exception as err:
             print(err)
-            return jsonify({'success': False})
+            return jsonify({'success': False, 'error': err})
     else:
         return jsonify({'success': False})
 
@@ -36,12 +43,14 @@ def decrypt():
             data = req['encrypted']
             key = list(key)
             data = list(data)
-            print(key, '---', data)
+            # print((key), '---', (data))
+            # print(type(key), '---', type(data))
+
             message, key = rsa_decrypt(key, data)
             return jsonify({'success': True, 'decrypted': message, 'private': key})
         except Exception as err:
             print(err)
-            return jsonify({'success': False})
+            return jsonify({'success': False, 'error': err})
     else:
         return jsonify({'success': False})
 

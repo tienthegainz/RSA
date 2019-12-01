@@ -50,12 +50,15 @@ def decrypt(encrypted, d, n):
     return mod_pow(encrypted, d, n)
 
 
-def rsa_encrypt(content, p=None, q=None):
+def rsa_encrypt(content, p=None, q=None, e=None, n=None):
     messages = chunk_message(content)
-    if p == None or q == None:
-        p = generate_big_prime()
-        q = generate_big_prime()
-    public, private = generate_keypair(p, q)
+    if e != None and n != None:
+        public = (e, n)
+    else:
+        if p == None or q == None:
+            p = generate_big_prime()
+            q = generate_big_prime()
+        public, _ = generate_keypair(p, q)
 
     encrypt_msg = list()
     for message in messages:
