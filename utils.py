@@ -44,7 +44,6 @@ def multiplicative_inverse(e, phi):
     x2 = 1
     y1 = 1
     temp_phi = phi
-    # print('Processing Euclid\' extended algorithm...')
     while e > 0:
         temp1 = int(temp_phi/e)
         temp2 = temp_phi - temp1 * e
@@ -68,7 +67,6 @@ def gcd(a, b):
     Euclid's algorithm for determining the greatest common divisor
     Use iteration to make it faster for larger integers
     '''
-    # print('Processing Euclid\'algorithm...')
     while b != 0:
         a, b = b, a % b
     return a
@@ -88,3 +86,30 @@ def chunk_message(msg, chunk_size=6):
         base += chunk_size
         chunks -= chunk_size
     return messages
+
+
+def serialize(l, sc='-'):
+    '''
+        Input: 
+            l: a list of number, 
+            sc: special string
+        Output: string concanate from list
+    '''
+    nl = list()
+    for v in l:
+        nl.append(str(v))
+    return sc.join(nl)
+
+
+def deserialize(string, sc='-'):
+    '''
+        Input: 
+            string: string concanated, 
+            sc: special string
+        Output: list number
+    '''
+    cl = string.split(sc)
+    l = list()
+    for v in cl:
+        l.append(int(v))
+    return l

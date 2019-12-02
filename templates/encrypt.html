@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Encrypt{% endblock %}
+
+{% block content %}
+<form method="POST">
+    <p>
+        <label for="Data">Message</label>
+        <input id="Data" name="data" type="text">
+    </p>
+    <p>
+        <label for="e">Public key(E, N)</label>
+        <input id="e" name="data" type="text">
+        - 
+        <input id="n" name="data" type="text">
+    </p>
+    <input type="submit" value="Encrypt-me">
+</form>
+{% endblock %}

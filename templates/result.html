@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Result{% endblock %}
+
+{% block content %}
+<p>
+    Content: {{ decrypted }} <br>
+    Private found: {{ private[0] }} - {{ private[1] }} <br>
+    <li><a href="/">Encrypt next</a></li>
+</p>
+{% endblock %}

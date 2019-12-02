@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Decrypt{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+    <p>
+        <label for="Data">Message</label>
+        <input id="Data" name="data" type="text" value={% if data %} {{ data }}{% endif %}>
+    </p>
+    <p>
+        <label for="e">Public key(E, N)</label>
+        <input id="e" name="key1" type="text" value={% if key1 %} {{ key1 }}{% endif %}> -
+        <input id="e" name="key2" type="text" value={% if key2 %} {{ key2 }}{% endif %}>
+    </p>
+    <input type="submit" value="Decrypt">
+</form>
+{% endblock %}
