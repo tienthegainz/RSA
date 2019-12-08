@@ -17,21 +17,15 @@ def encrypt_v1():
     if request.method == 'POST':
         try:
             req = request.form
+            print('REQUEST: {}'.format(req))
             data = req['data']
-            if 'e' in req and 'n' in req:
+            if 'e' in req and 'n' in req and req['e'] != '' and req['n'] != '':
                 e = int(req['e'])
                 n = int(req['n'])
-
                 key, code = rsa_encrypt(data, e=e, n=n)
-            elif 'q' in req and 'p' in req:
-                q = int(req['q'])
-                p = int(req['p'])
-                key, code = rsa_encrypt(data, p=p, q=q)
             else:
                 key, code = rsa_encrypt(data)
-            # print("Content: {} with pkey:{}\n".format(code, key))
             code = serialize(code)
-            # print("Content: {} with pkey:{}\n".format(code, key))
             return redirect(url_for('.decrypt_v1', key1=key[0], key2=key[1], encrypted=code))
         except Exception as error:
             print(error)
@@ -45,13 +39,13 @@ def decrypt_v1():
     if request.method == 'POST':
         try:
             req = request.form
-            print('REQUEST: {}'.format(req))
+            # print('REQUEST: {}'.format(req))
             key1 = req['key1']
             key2 = req['key2']
             key = [int(key1), int(key2)]
             data = req['data']
             data = deserialize(data)
-            # print('Data: {} - key: {}'.format(data, key))
+            print('Data: {} - key: {}'.format(data, key))
             message, key = rsa_decrypt(key, data)
             print('Data: {} - key: {}'.format(message, key))
             return render_template('result.html', decrypted=message, private=key)
@@ -108,8 +102,6 @@ def decrypt():
             data = req['encrypted']
             key = list(key)
             data = list(data)
-            # print((key), '---', (data))
-            # print(type(key), '---', type(data))
 
             message, key = rsa_decrypt(key, data)
             return jsonify({'success': True, 'decrypted': message, 'private': key})

@@ -54,6 +54,7 @@ def rsa_encrypt(content, p=None, q=None, e=None, n=None):
     messages = chunk_message(content)
     if e != None and n != None:
         public = (e, n)
+        print('Pre-defined key: ({})\n'.format(public))
     else:
         if p == None or q == None:
             p = generate_big_prime()

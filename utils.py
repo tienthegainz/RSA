@@ -80,8 +80,11 @@ def chunk_message(msg, chunk_size=6):
     msg = msg.strip(" \n\t\r")
     messages = []
     chunks = len(msg)
+    if chunks % chunk_size != 0:
+        msg += ' '*(chunk_size-chunks % chunk_size)
+    chunks = len(msg)
     base = 0
-    while chunks > 1:
+    while chunks > 0:
         messages.append(msg[base:base+chunk_size])
         base += chunk_size
         chunks -= chunk_size
